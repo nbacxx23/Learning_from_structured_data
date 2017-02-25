@@ -16,8 +16,12 @@ def viterbi(sentence,alpha,word_index,pos_index , pairs_index, dict_alphabet, ra
     pi.clear()
     bp.clear()
     pi[(0, '*', '*')] = 1.0
+    #for different lengths
     if len(sentence) == 1:
-        v_tags = dict_word_to_pair[sentence[0]]
+        if sentence[0] not in dict_word_to_pair:
+            v_tags = [i for i in pos_index]
+        else:
+            v_tags = dict_word_to_pair[sentence[0]]
         val_max = 0
         for v in v_tags:
             d = dict(w_i = sentence[0],t_2 = '*',t_1='*',t=v)
@@ -29,7 +33,11 @@ def viterbi(sentence,alpha,word_index,pos_index , pairs_index, dict_alphabet, ra
                 result_tags = [v]
         return result_tags
     elif len(sentence) == 2:
-        v_tags = dict_word_to_pair[sentence[0]]
+	last = '*'
+        if sentence[0] not in dict_word_to_pair:
+            v_tags = [i for i in pos_index]
+        else:
+            v_tags = dict_word_to_pair[sentence[0]]
         val_max = 0
         for v in v_tags:
             d = dict(w_i = sentence[0],t_2 = '*',t_1='*',t=v)
@@ -39,9 +47,13 @@ def viterbi(sentence,alpha,word_index,pos_index , pairs_index, dict_alphabet, ra
             if val>val_max:
                 val_max=val
                 result_tags = [v]
-        v2_tags = dict_word_to_pair[sentence[1]]
+        if sentence[1] not in dict_word_to_pair:
+            v_tags =  [i for i in pos_index]
+        else:
+            v2_tags = dict_word_to_pair[sentence[1]]
         val1 =val
         val_max = val
+	
         for v2 in v2_tags:
             d = dict(w_i = sentence[1],t_2 = '*',t_1 =v,t=v2)
             phi = get_feature_vector(1,sentence, d['t'], d['t_1'],d['t_2'],word_index =word_index,
@@ -49,15 +61,25 @@ def viterbi(sentence,alpha,word_index,pos_index , pairs_index, dict_alphabet, ra
             val = np.sum(alpha*phi)+val1
             if val> val_max:
                 val_max = val
-                result_tags.append(v2)
+                last = v2
+	result_tags.append(last)
+
         return result_tags
     else:
         for k in range(1,len(sentence)+1):
-            t = dict_word_to_pair[sentence[k-1]]
+            if sentence[k-1] in dict_word_to_pair:
+                t = dict_word_to_pair[sentence[k-1]]
+            else:
+                t = [i for i in pos_index]
             if k >2:
-                t2 = dict_word_to_pair[sentence[k-3]]
-            
-                t1 = dict_word_to_pair[sentence[k-2]]
+                if sentence[k-3] in dict_word_to_pair:
+                    t2 = dict_word_to_pair[sentence[k-3]]
+                else:
+                    t2 = [i for i in pos_index]
+                if sentence[k-2] in dict_word_to_pair:
+                    t1 = dict_word_to_pair[sentence[k-2]]
+                else:
+                    t1 = [i for i in pos_index]
                 
             if k == 1:
                 t1 = ['*']
@@ -83,7 +105,7 @@ def viterbi(sentence,alpha,word_index,pos_index , pairs_index, dict_alphabet, ra
     result_tags = []
     result_val = 0
     max_tmp = 0
-
+    # propagation for the tags
     for (k, u, v) in bp:
         if k == len(sentence):
             if pi[(k,u,v)] >max_tmp:

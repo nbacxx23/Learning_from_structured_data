@@ -98,6 +98,8 @@ def prefix_suffix_one(word,dict_alpha):
 def hasNumbers(inputString):
     return any(char.isdigit() for char in inputString)
 
+
+# feature of prefix and suffix
 def prefix_suffix_three(word, dict_alpha):
     l = 37 * 3
     prefix_three_feat = np.zeros(l)
@@ -193,8 +195,9 @@ def rare_word(word,rare_words,not_rare_words):
 
 #get feature_vector
 def get_feature_vector(position,sentence,tag,tag_1,tag_2,word_index,pos_index,pairs_index, dict_alphabet, rare_words, not_rare_words):
-    #word-level features
+ 
 
+# word-level features
     word = sentence[position]
     word_feat = presentation_word(word = word, word_index=word_index)
     contain_number_feat = contain_number(word=word)
@@ -210,6 +213,7 @@ def get_feature_vector(position,sentence,tag,tag_1,tag_2,word_index,pos_index,pa
     #position feature
     position_feat = position_feature(position=position)
     last_word_feat,last_two_word_feat,next_word_feat,next_two_word_feat = neighbors_word(position=position,sentence=sentence,word_index=word_index)
+   # combination of features
     feature_vector = np.concatenate((word_feat,contain_number_feat,contain_uppercase_feat,contain_hyphen_feat,
         prefix_feat,suffix_feat,pair_feat,rare_word_feat,
         tag_2_feat, tag_1_feat,tag_feat,

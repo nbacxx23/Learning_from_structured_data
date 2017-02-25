@@ -3,7 +3,7 @@
 
 @author: Xiaoxiao CHEN/Yuxiang WANG
 """
-
+from __future__ import division
 import sys
 import math
 import copy
@@ -55,6 +55,7 @@ def get_sentence_and_tags(data):
     return (copy.deepcopy(sentence), copy.deepcopy(tags))
 
 def perceptron(print_alpha,T):    
+
     f = open("data_train",'r')
     sentence_train = []
     s = []
@@ -63,8 +64,8 @@ def perceptron(print_alpha,T):
             sentence_train.append(s)
             s = []
 	else :
-		word,tag = line.split('\t')
-		s.append((word,tag[:-1]))
+	    word,tag = line.split('\t')
+	    s.append((word,tag[:-1]))
     #print sentence_train
 
     # initialize the parameters
@@ -128,13 +129,34 @@ def perceptron(print_alpha,T):
                 dict_trigram[i] = tmp
     
     
+	
     T_DEFAULT = T
     global possible_tags
     global alpha
     global add_factor
     global alpha_sum
+    rate = []
     alpha_sum = np.zeros(61020)
     for t in xrange(T_DEFAULT):
+        j = 0
+	name = 'outputs/iteration_'+str(t)
+        name1 = 'outputs/iter_alpha_sum_'+str(t)
+	out = open(name, 'w')
+        out1 = open(name1, 'w')
+	for i in range(len(alpha)):
+            out.write('alpha_'+str(i))
+	    out.write('\t')
+	    out.write(str(alpha[i]))
+            out.write('\n')
+        out.close()	
+        for i in range(len(alpha_sum)):
+            out1.write('alpha_sum_'+str(i))
+            out1.write('\t')
+            out1.write(str(alpha_sum[i]))
+            out1.write('\n')
+        out1.close()
+        correct_number = 0
+        wrong_number = 0
         print '---{0}---'.format(t)
         sys.stdout.flush()
         dont_repeat = True
@@ -143,35 +165,48 @@ def perceptron(print_alpha,T):
         for s in xrange(len(sentence_train)):
             data = sentence_train[s]
             vals = get_sentence_and_tags(data)
-            j = 0
+            
             examp_num = s+1
             sentence = vals[0]
             correct_tags = vals[1]
+            #get prediction tags by viterbi
             tags = viterbi(sentence,alpha,word_index,pos_index , pairs_index, dict_alphabet, rare_words, not_rare_words,dict_word_to_pair,dict_trigram)
             indices = get_global_phi(sentence, tags,word_index,pos_index , pairs_index, dict_alphabet, rare_words, not_rare_words)
             #print max(alpha),min(alpha)
             correct_indices = get_global_phi(sentence, correct_tags,word_index,pos_index , pairs_index, dict_alphabet, rare_words, not_rare_words)
             #print np.sum(alpha)
             error = np.zeros(61020)
+            #update the alpha
             for i in range(len(error)):
                 if indices[i]!=correct_indices[i]:
                     error[i] = correct_indices[i]-indices[i]
 
-            
+            for i in range(len(tags)):
+                if tags[i]==correct_tags[i]:
+                    correct_number +=1
+                else:
+                    wrong_number +=1
             if not tags == correct_tags:
                 dont_repeat = False
                 alpha = alpha + error
-            alpha_sum = alpha_sum + alpha
             else:
                 j=j+1
+            alpha_sum = alpha_sum + alpha
         if dont_repeat:
             print 'SUCCESS!!!'
             break
-        print 'number correct: {0}'.format(j)
         
+        
+        rate.append(wrong_number/(wrong_number+correct_number))
+    out3 = open('rate', 'w')
+    for i in rate:
+        out3.write(str(i))
+        out3.write('\n')
+    out3.close()
+
         #if print_alpha:
          #   write_alpha(t)
-        print np.sum(alpha_sum)
+        
 def write_alpha(t):
     global alpha_average
     string = 'outputs/alpha_{0}.txt'.format(t)
@@ -209,6 +244,6 @@ def get_global_phi(sentence, tags,word_index,pos_index , pairs_index, dict_alpha
                 result += get_feature_vector(i,sentence, d['t'], d['t_1'],d['t_2'],word_index =word_index,
         pos_index=pos_index , pairs_index=pairs_index , dict_alphabet=dict_alphabet, rare_words=rare_words, not_rare_words=not_rare_words)    
     return copy.deepcopy(result)
-
+	
 if __name__ == '__main__':    
-    perceptron(1,5)
+    perceptron(1,100)
